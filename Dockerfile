@@ -1,4 +1,4 @@
-FROM php:8.4-fpm
+FROM php:8.4-cli
 
 # Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
@@ -8,18 +8,21 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     libssl-dev \
+    libcurl4-openssl-dev \
+    pkg-config \
+    libssl-dev \
     zip \
     unzip \
-    supervisor
-
-# Limpiar cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+    supervisor \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Instalar extensiones de PHP
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets
 
 # Instalar extensión MongoDB
-RUN pecl install mongodb && docker-php-ext-enable mongodb
+RUN pecl install mongodb-2.1.0 \
+    && docker-php-ext-enable mongodb \
+    && php -m | grep mongodb
 
 # Obtener Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -41,7 +44,7 @@ RUN mkdir -p /var/www/storage/logs \
     && chmod -R 775 /var/www/bootstrap/cache
 
 # Instalar dependencias de PHP
-RUN composer install --optimize-autoloader --no-dev
+RUN composer install --optimize-autoloader --no-dev --no-scripts --prefer-dist
 
 # Exponer puerto
 EXPOSE 8080

@@ -13,6 +13,7 @@ class SensorData extends Model
         'temperature',
         'humidity',
         'air_quality',
+        'co2',
         'timestamp',
         'alert',
     ];
@@ -21,6 +22,7 @@ class SensorData extends Model
         'temperature' => 'float',
         'humidity' => 'float',
         'air_quality' => 'float',
+        'co2' => 'float',
         'timestamp' => 'datetime',
         'alert' => 'array',
     ];

@@ -89,6 +89,32 @@ class MqttService
     }
 
     /**
+     * Parsear timestamp desde diferentes formatos
+     */
+    private function parseTimestamp($timestamp)
+    {
+        if (!$timestamp) {
+            return now();
+        }
+
+        // Si es un número (Unix timestamp), usarlo directamente
+        if (is_numeric($timestamp)) {
+            return now()->setTimestamp((int) $timestamp);
+        }
+
+        // Si es un string ISO 8601 o cualquier formato de fecha
+        try {
+            return \Carbon\Carbon::parse($timestamp);
+        } catch (\Exception $e) {
+            Log::warning('Error al parsear timestamp, usando hora actual', [
+                'timestamp' => $timestamp,
+                'error' => $e->getMessage(),
+            ]);
+            return now();
+        }
+    }
+
+    /**
      * Procesar datos recibidos del sensor
      */
     private function handleSensorData(string $message): void
@@ -117,7 +143,8 @@ class MqttService
                 'temperature' => (float) $data['temperature'],
                 'humidity' => (float) $data['humidity'],
                 'air_quality' => isset($data['air_quality']) ? (float) $data['air_quality'] : null,
-                'timestamp' => isset($data['timestamp']) ? now()->setTimestamp($data['timestamp']) : now(),
+                'co2' => isset($data['co2']) ? (float) $data['co2'] : null,
+                'timestamp' => $this->parseTimestamp($data['timestamp'] ?? null),
                 'alert' => $alerts,
             ];
 

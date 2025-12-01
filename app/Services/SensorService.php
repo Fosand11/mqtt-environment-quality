@@ -191,6 +191,7 @@ class SensorService
             'temperature' => $data['temperature'],
             'humidity' => $data['humidity'],
             'air_quality' => $data['air_quality'] ?? null,
+            'co2' => $data['co2'] ?? null,
             'timestamp' => $data['timestamp'] ?? now(),
             'alert' => $data['alert'] ?? [],
         ]);

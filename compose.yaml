@@ -41,10 +41,23 @@ services:
             retries: 3
             timeout: 5s
 
+    mqtt-broker:
+        image: 'eclipse-mosquitto:latest'
+        ports:
+            - '${MQTT_BROKER_PORT:-1883}:1883'
+            - '9001:9001'
+        volumes:
+            - 'sail-mosquitto:/mosquitto/data'
+            - './mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf'
+        networks:
+            - sail
+
 networks:
     sail:
         driver: bridge
 
 volumes:
     sail-mongodb:
+        driver: local
+    sail-mosquitto:
         driver: local

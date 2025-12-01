@@ -1,6 +1,6 @@
 FROM eclipse-mosquitto:latest
 
-# Mosquitto MQTT Broker for Railway
+# Mosquitto MQTT Broker for Railway - Force rebuild v2
 # Crear directorio de configuración
 RUN mkdir -p /mosquitto/config
 

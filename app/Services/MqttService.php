@@ -32,7 +32,10 @@ class MqttService
         $this->client = new MqttClient($host, $port, $clientId);
 
         $this->connectionSettings = (new ConnectionSettings)
-            ->setKeepAliveInterval(60)
+            ->setKeepAliveInterval(30)  // Reducido de 60 a 30 segundos
+            ->setConnectTimeout(10)
+            ->setSocketTimeout(10)
+            ->setResendTimeout(10)
             ->setLastWillTopic('clients/laravel')
             ->setLastWillMessage('Laravel client desconectado')
             ->setLastWillQualityOfService(1);

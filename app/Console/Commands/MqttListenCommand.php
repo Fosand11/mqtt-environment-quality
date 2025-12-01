@@ -47,11 +47,13 @@ class MqttListenCommand extends Command
 
             // Loop de escucha
             $startTime = time();
-            $messageCount = 0;
+            $loopCount = 0;
+            $lastHeartbeat = time();
 
             while (true) {
-                $mqttService->loop(true);
-                $messageCount++;
+                // Loop no bloqueante - permite ping/pong automático
+                $mqttService->loop(true, true);
+                $loopCount++;
 
                 // Verificar timeout
                 if ($timeout > 0 && (time() - $startTime) >= $timeout) {
@@ -59,11 +61,15 @@ class MqttListenCommand extends Command
                     break;
                 }
 
-                // Mostrar progreso cada 10 segundos
-                if ($messageCount % 10 === 0) {
+                // Mostrar heartbeat cada 30 segundos
+                if ((time() - $lastHeartbeat) >= 30) {
                     $elapsed = time() - $startTime;
-                    $this->line("📊 Tiempo transcurrido: {$elapsed}s");
+                    $this->line("💓 Heartbeat - Tiempo activo: {$elapsed}s");
+                    $lastHeartbeat = time();
                 }
+
+                // Pequeño delay para evitar 100% CPU
+                usleep(100000); // 100ms
             }
 
             // Desconectar
@@ -76,13 +82,26 @@ class MqttListenCommand extends Command
             $this->error('❌ Error: ' . $e->getMessage());
             Log::error('Error en MQTT listener: ' . $e->getMessage(), [
                 'exception' => $e,
+                'trace' => $e->getTraceAsString(),
             ]);
 
             // Intentar desconectar si es posible
             try {
                 $mqttService->disconnect();
             } catch (\Exception $disconnectException) {
-                // Ignorar errores al desconectar
+                Log::warning('Error al desconectar: ' . $disconnectException->getMessage());
+            }
+
+            // Si el error es de conexión, intentar reconectar
+            if (str_contains($e->getMessage(), 'socket') ||
+                str_contains($e->getMessage(), 'ping') ||
+                str_contains($e->getMessage(), 'connection')) {
+
+                $this->warn('🔄 Detectado error de conexión - Reintentando en 5 segundos...');
+                sleep(5);
+
+                // Reiniciar el comando
+                return $this->call('mqtt:listen', ['--timeout' => $this->option('timeout')]);
             }
 
             return Command::FAILURE;
